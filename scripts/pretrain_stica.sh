@@ -5,22 +5,19 @@
 #SBATCH --cpus-per-task=10
 #SBATCH --error=/checkpoint/%u/jobs/%j.err
 #SBATCH --gres=gpu:8
-#SBATCH --job-name=GDT_RRC
+#SBATCH --job-name=STICA
 #SBATCH --mem=450GB
-#SBATCH --nodes=8
+#SBATCH --nodes=2
 #SBATCH --ntasks-per-node=8
 #SBATCH --open-mode=append
 #SBATCH --output=/checkpoint/%u/jobs/%j.out
-#SBATCH --partition=priority
-#SBATCH --comment=CVPR21
+#SBATCH --partition=learnfair
 #SBATCH --signal=USR1@120
 #SBATCH --time=72:00:00
-#SBATCH --mail-user=%u@fb.com
-#SBATCH --mail-type=END,FAIL,REQUEUE
 
 module load anaconda3
-conda activate gdtv2
-source activate gdtv2
+conda activate motionformer
+source activate motionformer
 
 export MASTER_ADDR=${SLURM_NODELIST:0:9}${SLURM_NODELIST:10:4}
 export MASTER_PORT=19500
@@ -106,7 +103,7 @@ TEMP=0.5
 
 ### EXP DUMP PATH
 EXP_NAME="fm_multi_crop_temp_${TEMP}_${MULTI_CROP}_${NUM_LARGE_CROPS}L${NUM_SMALL_CROPS}S${NUM_LARGE_TCROPS}TL${NUM_SMALL_TCROPS}TS_${NUM_LAYER}_cross_Transf_alpha_${CROSS_MODAL_ALPHA}_bandit_algo_${BANDIT_ALGO}"
-SAV_FOLDER="/checkpoint/mandelapatrick/CVPR21_MC_GDT/${EXP_NAME}"
+SAV_FOLDER="/checkpoint/mandelapatrick/CVPR21_MC_GDT_oss/${EXP_NAME}"
 mkdir -p ${SAV_FOLDER}
 
 ### DATA PARAMS
@@ -144,7 +141,7 @@ USE_GRAYSCALE='True'
 USE_GAUSSIAN='True'
 
 # command
-srun --label python -u main_fm_crop.py \
+srun --label python -u main_stica.py \
 --dump_path ${SAV_FOLDER} \
 --num_frames ${NUM_FRAMES} \
 --target_fps ${TARGET_FPS} \
@@ -176,11 +173,6 @@ srun --label python -u main_fm_crop.py \
 --use_fp16 ${USE_FP_16} \
 --dist_url $dist_url \
 --num_layer ${NUM_LAYER} \
---bandit_algo ${BANDIT_ALGO} \
---bandit_arms_count ${BANDIT_ARMS} \
---bandit_alpha ${BANDIT_ALPHA} \
---bandit_update_trunk ${UPDATE_TRUNK} \
---bandit_step_size ${STEP_SIZE} \
 --colorjitter ${COLORJITTER} \
 --use_grayscale ${USE_GRAYSCALE} \
 --use_gaussian ${USE_GAUSSIAN} \
