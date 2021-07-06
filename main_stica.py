@@ -66,10 +66,6 @@ def main():
     else:
         aug_audio = []
 
-    # build data
-    if not args.cross_modal_nce:
-        args.dual_data = True # video only SimCLR
-
     train_dataset = AVideoDataset(
         ds_name='kinetics',
         mode='train',
@@ -322,19 +318,6 @@ def train(train_loader, model, optimizer, epoch, lr_schedule, writer):
         croplosses_meter.update(loss_crops.item(), bs)
         batch_time.update(time.time() - end)
         end = time.time()
-        if it % 100 == 0:
-            if args.only_cross_modal:
-                # just for tracking!! # remove soon.
-                with torch.no_grad():
-                    crop_losses2, counters2 = nce_crop_losses(
-                        crop_feat_v_nces, 
-                        XE=XE,
-                        s_large_crops=args.num_large_crops,  
-                        s_small_crops=args.num_small_crops,
-                        t_large_crops=args.num_large_tcrops, 
-                        t_small_crops=args.num_small_tcrops, 
-                        temp=args.temp
-                    )
         if args.rank == 0 and it % 50 == 0:
             logger.info(
                 "Epoch: [{0}][{1}]\t"
@@ -359,57 +342,57 @@ def train(train_loader, model, optimizer, epoch, lr_schedule, writer):
             # Log onto tensorboard
             if writer:
                 writer.add_scalar(
-                    f'pretrain/loss/iter', 
-                    loss.item(), 
+                    f'pretrain/loss/iter',
+                    loss.item(),
                     iteration
                 )
                 writer.add_scalar(
-                    f'pretrain/crop_loss/iter', 
-                    loss_crops.item(), 
+                    f'pretrain/crop_loss/iter',
+                    loss_crops.item(),
                     iteration
                 )
                 if counters[0] > 0:
                     writer.add_scalar(
-                        f"pretrain/crop_loss/L-L/iter", 
-                        crop_losses[0].item()/counters[0], 
+                        f"pretrain/crop_loss/L-L/iter",
+                        crop_losses[0].item()/counters[0],
                         iteration
                     )
                 if counters[1] > 0:
                     writer.add_scalar(
-                        f"pretrain/crop_loss/S-L/iter", 
+                        f"pretrain/crop_loss/S-L/iter",
                         crop_losses[1].item() / counters[1],
                         iteration
                     )
                 if counters[2] > 0:
                     writer.add_scalar(
-                        f"pretrain/crop_loss/TL-TL/iter", 
-                        crop_losses[2].item() / counters[2], 
+                        f"pretrain/crop_loss/TL-TL/iter",
+                        crop_losses[2].item() / counters[2],
                         iteration
                     )
                 if counters[3] > 0:
                     writer.add_scalar(
-                        f"pretrain/crop_loss/TS-TL/iter", 
-                        crop_losses[3].item() / counters[3], 
+                        f"pretrain/crop_loss/TS-TL/iter",
+                        crop_losses[3].item() / counters[3],
                         iteration
                     )
                 writer.add_scalar(
-                    f'pretrain/av_loss/iter', 
-                    loss_av.item(), 
+                    f'pretrain/av_loss/iter',
+                    loss_av.item(),
                     iteration
                 )
                 writer.add_scalar(
-                    f'pretrain/lr/iter', 
-                    optimizer.param_groups[0]["lr"], 
+                    f'pretrain/lr/iter',
+                    optimizer.param_groups[0]["lr"],
                     iteration
                 )
                 writer.add_scalar(
-                    f'pretrain/batch_time/iter', 
-                    batch_time.avg, 
+                    f'pretrain/batch_time/iter',
+                    batch_time.avg,
                     iteration
                 )
                 writer.add_scalar(
-                    f'pretrain/data_time/iter', 
-                    data_time.avg, 
+                    f'pretrain/data_time/iter',
+                    data_time.avg,
                     iteration
                 )
 
@@ -448,11 +431,11 @@ def gdt_loss(
     # loss is constructed from both
     if symmetric:
         # Video-Audio NCE loss
-        feat_a_other = dist_collect_other(feat_a, 
+        feat_a_other = dist_collect_other(feat_a,
             return_before_cat=False)
         a_other = torch.cat((feat_a, feat_a_other), 0).detach()
         logits_va = torch.einsum('bc,mc->bm', feat_v, a_other)
-        labels_va = torch.arange(0, len(logits_va), 
+        labels_va = torch.arange(0, len(logits_va),
             dtype=torch.long).cuda()
         loss_nce_va = XE(logits_va / temp, labels_va)
         loss_gdt = 0.5 * (loss_nce_av + loss_nce_va)
