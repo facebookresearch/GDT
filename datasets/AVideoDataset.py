@@ -179,107 +179,81 @@ class AVideoDataset(torch.utils.data.Dataset):
     bottom crop if the height is larger than the width.
     """
     def __init__(
-        self, 
-        ds_name='kinetics',
-        root_dir=None,
-        mode='train',
-        num_frames=30,
-        sample_rate=1,
-        num_train_clips=1,
-        train_crop_size=112,
-        test_crop_size=112,
-        num_spatial_crops=3,
-        num_ensemble_views=10,
-        path_to_data_dir='datasets/data',
-        seed=None,
-        num_data_samples=None,
-        fold=1,
-        colorjitter=False,
-        use_grayscale=False,
-        use_gaussian=False,
-        dual_data=False,
-        temp_jitter=True,
-        center_crop=False,
-        target_fps=30,
-        decode_audio=True,
-        aug_audio=[],
-        num_sec=1,
-        aud_sample_rate=48000,
-        aud_spec_type=1,
-        use_volume_jittering=False,
-        use_temporal_jittering=False,
-        z_normalize=False,
-        multi_crop=False,
-        use_random_resize_crop=False,
-        constant_scale=False,
-        num_large_crops=1,
-        num_small_crops=0,
-        pretrain=True
+            self,
+            ds_name='kinetics',
+            root_dir=None,
+            mode='train',
+            decode_audio=False,
+            # settings for downstream tasks
+            num_ensemble_views=10,
+            num_spatial_crops=3,
+            center_crop=False,
+            fold=1,
+            args=None,
     ):
-        # Only support train, val, and test mode.
-        assert mode in [
-            "train",
-            "val",
-            "test",
-        ], "Split '{}' not supported for '{}'".format(mode, ds_name)
         self.ds_name = ds_name
         self.mode = mode
-        self.num_frames = num_frames
-        self.sample_rate = sample_rate
-        self.train_crop_size = train_crop_size
-        self.test_crop_size = test_crop_size
-        if train_crop_size in [112, 128]:
+        self.path_to_data_dir='datasets/data' # local directory to store pickle of valid videos
+        self.num_frames=args.num_frames   # number of frames
+        self.target_fps=args.target_fps   # frames per second
+        self.sample_rate=args.sample_rate # audio sample rate
+        #* video related params
+        self.train_crop_size=args.train_crop_size
+        self.test_crop_size=args.test_crop_size
+        ##* video croppings
+        self.multi_crop=args.multi_crop # whether to get multiple crops per video
+        self.use_random_resize_crop=args.use_random_resize_crop # if not, it just does random cropping.
+        self.num_large_crops=args.num_large_crops
+        self.num_small_crops=args.num_small_crops
+        ##* downstream task cropping settings
+        self.center_crop = center_crop # only center crop?
+        self.num_ensemble_views = num_ensemble_views # 10 crops in time
+        self.num_spatial_crops = num_spatial_crops # 3 in space
+        ##* video augmentations
+
+        self.colorjitter=args.colorjitter
+        self.use_grayscale=args.use_grayscale
+        self.use_gaussian=args.use_gaussian
+
+        #* audio settings
+        self.decode_audio=decode_audio
+        self.num_sec=args.num_sec_aud
+        self.aud_sample_rate=args.aud_sample_rate
+        self.aud_spec_type=args.aud_spec_type
+        self.use_volume_jittering=args.use_volume_jittering
+        self.use_temporal_jittering=args.use_audio_temp_jittering
+        self.z_normalize=args.z_normalize
+
+        #* other
+        self.num_data_samples=None # if we want to artificially limit size of dataset
+
+
+        assert mode in ["train","val","test"], "Split '{}' not supported for '{}'".format(mode, ds_name)
+        if self.train_crop_size in [112, 128]:
             train_jitter_scales = (128, 160)
         else:
             train_jitter_scales = (256, 320)
         self.train_jitter_scales = train_jitter_scales
-        self.num_ensemble_views = num_ensemble_views
-        self.num_spatial_crops = num_spatial_crops
-        self.num_train_clips = num_train_clips
         if root_dir is None:
             self.data_prefix = os.path.join(ROOT_DIR[ds_name], MODE_DIR[ds_name][mode])
         else:
             self.data_prefix = root_dir
-        self.path_to_data_dir = path_to_data_dir
-        self.num_data_samples = num_data_samples
-        self.colorjitter = colorjitter
-        self.use_grayscale = use_grayscale
-        self.use_gaussian = use_gaussian
-        self.temp_jitter = temp_jitter
-        self.center_crop = center_crop
-        self.target_fps = target_fps
-        self.decode_audio = decode_audio
-        self.aug_audio = aug_audio
-        self.num_sec=num_sec
-        self.aud_sample_rate = aud_sample_rate
-        self.aud_spec_type = aud_spec_type
-        self.use_volume_jittering = use_volume_jittering
-        self.use_temporal_jittering = use_temporal_jittering
-        self.z_normalize = z_normalize
         self._video_meta = {}
         self.fold = fold # ucf101 and hmdb51
-        self.dual_data = dual_data
-        self.multi_crop = multi_crop
-        self.use_random_resize_crop = use_random_resize_crop
-        self.num_large_crops = num_large_crops
-        self.num_small_crops = num_small_crops
-        self.constant_scale = constant_scale
-        self.pretrain = pretrain
 
         # Get classes
-        if self.ds_name != 'audioset':
-            classes = list(sorted(glob.glob(os.path.join(self.data_prefix, '*'))))
-            classes = [os.path.basename(i) for i in classes]
-            self.class_to_idx = {classes[i]: i for i in range(len(classes))}
+        classes = list(sorted(glob.glob(os.path.join(self.data_prefix, '*'))))
+        classes = [os.path.basename(i) for i in classes]
+        self.class_to_idx = {classes[i]: i for i in range(len(classes))}
 
-        # For training or validation mode, one single clip is sampled from every video. 
-        # For testing, NUM_ENSEMBLE_VIEWS clips are sampled from every video. 
+        # For training or validation mode, one single clip is sampled from every video.
+        # For testing, NUM_ENSEMBLE_VIEWS clips are sampled from every video.
         # For every clip, NUM_SPATIAL_CROPS is cropped spatially from the frames.
         if self.mode in ["train", "val"]:
-            self._num_clips = self.num_train_clips
+            self._num_clips = 1
         elif self.mode in ["test"]:
             self._num_clips = (
-                self.num_ensemble_views * self.num_spatial_crops
+                    self.num_ensemble_views * self.num_spatial_crops
             )
 
         self.manager = Manager()
@@ -296,7 +270,7 @@ class AVideoDataset(torch.utils.data.Dataset):
             self.path_to_data_dir, f"{self.ds_name}_{self.mode}.txt"
         )
         if not os.path.exists(path_to_file) and self.ds_name != 'audioset':
-            files = list(sorted(glob.glob(os.path.join(self.data_prefix, '*', '*')))) 
+            files = list(sorted(glob.glob(os.path.join(self.data_prefix, '*', '*'))))
             with open(path_to_file, 'w') as f:
                 for item in files:
                     f.write("%s\n" % item)
@@ -312,15 +286,14 @@ class AVideoDataset(torch.utils.data.Dataset):
                     self._path_to_videos.append(
                         os.path.join(self.data_prefix, path)
                     )
-                    if self.ds_name != 'audioset':
-                        class_name = path.split('/')[-2]
-                        label = self.class_to_idx[class_name]
+                    class_name = path.split('/')[-2]
+                    label = self.class_to_idx[class_name]
                     self._labels.append(int(label))
                     self._spatial_temporal_idx.append(idx)
                     self._vid_indices.append(clip_idx)
                     self._video_meta[clip_idx * self._num_clips + idx] = {}
         assert (
-            len(self._path_to_videos) > 0
+                len(self._path_to_videos) > 0
         ), "Failed to load {} split {} from {}".format(
             self.ds_name, self._split_idx, path_to_file
         )
@@ -332,9 +305,7 @@ class AVideoDataset(torch.utils.data.Dataset):
 
         # Create / Load valid indices (has audio)
         if self.ds_name in ['audioset', 'kinetics', 'kinetics600', 'vggsound']:
-            if self.mode == 'train': # and self.pretrain:
-                # num_sec = self.num_frames / self.target_fps
-                #vid_valid_file = f'{self.path_to_data_dir}/{self.ds_name}_da_{self.decode_audio}_sec_{self.num_sec}_valid.pkl'
+            if self.mode == 'train':
                 vid_valid_file = f'{self.path_to_data_dir}/{self.ds_name}_valid.pkl'
                 if os.path.exists(vid_valid_file):
                     with open(vid_valid_file, 'rb') as handle:
@@ -343,12 +314,13 @@ class AVideoDataset(torch.utils.data.Dataset):
                     self.valid_indices = filter_videos(self._path_to_videos, decode_audio=self.decode_audio)
                     with open(vid_valid_file, 'wb') as handle:
                         pickle.dump(
-                            self.valid_indices, 
-                            handle, 
+                            self.valid_indices,
+                            handle,
                             protocol=pickle.HIGHEST_PROTOCOL
                         )
                 if self.num_data_samples is not None:
-                    self.valid_indices = self.valid_indices[:self.num_data_samples]
+                    rand_indices = np.random.choice(range(len(self.valid_indices), self.num_data_samples, replace=False))
+                    self.valid_indices = np.array(self.valid_indices)[rand_indices]
             else:
                 # self.valid_indices = [i for i in range(0, len(self._path_to_videos))]
                 vid_valid_file = f'{self.path_to_data_dir}/{self.ds_name}_valid_{self.mode}_{self.decode_audio}.pkl'
@@ -359,12 +331,10 @@ class AVideoDataset(torch.utils.data.Dataset):
                     self.valid_indices = filter_videos(self._path_to_videos, decode_audio=self.decode_audio)
                     with open(vid_valid_file, 'wb') as handle:
                         pickle.dump(
-                            self.valid_indices, 
-                            handle, 
+                            self.valid_indices,
+                            handle,
                             protocol=pickle.HIGHEST_PROTOCOL
                         )
-                if self.num_data_samples is not None:
-                    self.valid_indices = self.valid_indices[:self.num_data_samples]
             print(f"Total number of videos: {len(self._path_to_videos)}, Valid videos: {len(self.valid_indices)}", flush=True)
         else: # ucf101 and hmdb-51
             if self.ds_name == 'ucf101':
@@ -392,46 +362,38 @@ class AVideoDataset(torch.utils.data.Dataset):
             # -1 indicates random sampling.
             temporal_sample_index = -1
             spatial_sample_index = -1
-            min_scale = self.train_jitter_scales[0]
             max_scale = self.train_jitter_scales[1]
-            crop_size = self.train_crop_size
             if self.center_crop:
                 spatial_sample_index = 1
-                min_scale = self.train_crop_size
                 max_scale = self.train_crop_size
-                crop_size = self.train_crop_size
         elif self.mode in ["test"]:
             temporal_sample_index = (
-                self._spatial_temporal_idx[index] // self.num_spatial_crops
+                    self._spatial_temporal_idx[index] // self.num_spatial_crops
             )
             # spatial_sample_index is in [0, 1, 2]. Corresponding to left,
             # center, or right if width is larger than height, and top, middle,
             # or bottom if height is larger than width.
             spatial_sample_index = (
-                self._spatial_temporal_idx[index] % self.num_spatial_crops
+                    self._spatial_temporal_idx[index] % self.num_spatial_crops
             )
             min_scale, max_scale, crop_size = [self.test_crop_size] * 3
             # The testing is deterministic and no jitter should be performed.
             # min_scale, max_scale, and crop_size are expect to be the same.
-            assert len({min_scale, max_scale, crop_size}) == 1
+            # assert len({min_scale, max_scale, crop_size}) == 1
         else:
             raise NotImplementedError(
                 "Does not support {} mode".format(self.mode)
             )
 
         # Get number of clips
-        if self.mode in ["train", "val"] and self.dual_data:
-            num_clips = 2
-        else:
-            num_clips = 1
+        num_clips = 1
         V = []
         A = []
         action = 0
-        speed = self.sample_rate
         speed_abs = abs(self.sample_rate)
 
-        for i in range(num_clips): 
-            # Try to decode and sample a clip from a video. 
+        for i in range(num_clips):
+            # Try to decode and sample a clip from a video.
             video_container = get_video_container(
                 self._path_to_videos[index],
                 ENABLE_MULTI_THREAD_DECODE,
@@ -444,22 +406,18 @@ class AVideoDataset(torch.utils.data.Dataset):
                 video_container,
                 speed_abs,
                 self.num_frames,
-                temporal_sample_index if self.temp_jitter else 500,
-                self.num_ensemble_views if self.temp_jitter else 1000,
+                temporal_sample_index,
+                self.num_ensemble_views,
                 video_meta=self._video_meta[index],
                 target_fps=int(self.target_fps),
                 backend=DECODING_BACKEND,
                 max_spatial_scale=max_scale,
                 decode_audio=self.decode_audio,
-                aug_audio=self.aug_audio,
                 num_sec=int(self.num_sec),
-                aud_sample_rate=self.aud_sample_rate,
-                aud_spec_type=self.aud_spec_type,
-                use_volume_jittering=self.use_volume_jittering,
                 use_temporal_jittering=self.use_temporal_jittering,
                 z_normalize=self.z_normalize,
             )
-            
+
             # Perform data augmentation on video clip.
             if self.multi_crop:
                 multi_crop_clips = self.num_large_crops + self.num_small_crops
@@ -468,22 +426,15 @@ class AVideoDataset(torch.utils.data.Dataset):
                 self.num_large_crops = 1
                 self.num_small_crops = 0
             use_random_resize_crop = (self.use_random_resize_crop) and (self.mode == 'train')
-            crop_scale = np.random.uniform(0.14, 1.0)
             for j in range(multi_crop_clips):
                 if j < self.num_large_crops:
                     min_scale, max_scale, crop_size = self.train_jitter_scales[0], self.train_jitter_scales[1], self.train_crop_size
                     if use_random_resize_crop:
-                        if self.constant_scale:
-                            min_scale, max_scale, crop_size = crop_scale, crop_scale, self.train_crop_size
-                        else:
-                            min_scale, max_scale, crop_size = 0.14, 1.0, self.train_crop_size
+                        min_scale, max_scale, crop_size = 0.14, 1.0, self.train_crop_size
                 else:
                     min_scale, max_scale, crop_size = self.train_jitter_scales[0], self.train_jitter_scales[1], 96
                     if use_random_resize_crop:
-                        if self.constant_scale:
-                            min_scale, max_scale, crop_size = crop_scale, crop_scale, 96
-                        else:
-                            min_scale, max_scale, crop_size = 0.05, 0.14, 64
+                        min_scale, max_scale, crop_size = 0.05, 0.14, 64
                 V.append(clip_augmentation(
                     frames.clone(),
                     spatial_idx=spatial_sample_index,
@@ -500,23 +451,16 @@ class AVideoDataset(torch.utils.data.Dataset):
         # Get labels and indices
         label = self._labels[index]
         vid_idx = self._vid_indices[index]
-        idx = index
 
         # return results
+        if not self.multi_crop:
+            V = torch.cat(V, dim=0)
         if self.decode_audio:
-            audio = torch.cat(A, dim=0) if not self.dual_data else A
-            # frames = torch.cat(V, dim=0)
-            if self.multi_crop:
-                return V, audio, action, label, index_capped, vid_idx
-            else:
-                frames = torch.cat(V, dim=0)
-                return frames, audio, action, label, index_capped, vid_idx
+            audio = torch.cat(A, dim=0)
+            return V, audio, action, label, index_capped, vid_idx
         else:
-            if self.multi_crop:
-                return V, action, label, index_capped, vid_idx
-            else:
-                frames = torch.cat(V, dim=0)
-                return frames, action, label, index_capped, vid_idx
+            return V, action, label, index_capped, vid_idx
+
 
     def __len__(self):
         """
@@ -532,28 +476,21 @@ if __name__ == '__main__':
     import time
     from torch.utils.data import DataLoader
     from torch.utils.data.dataloader import default_collate
+    from opt import parse_arguments
     import torchvision
     import torch
 
     print("="*60)
     print('Testing AVideoDataset')
     multi_crop = True
+
+
+    parser = parse_arguments()
+    args = parser.parse_args()
     val_dataset = AVideoDataset(
         ds_name='ucf101',
         mode='train',
-        num_frames=30, # 240
-        sample_rate=1, # 1
-        train_crop_size=112,
-        colorjitter=False,
-        use_grayscale=False,
-        use_gaussian=False,
-        dual_data=False,
-        temp_jitter=False, # True
-        decode_audio=False,
-        center_crop=False,
-        multi_crop=multi_crop,
-        num_large_crops=1,
-        num_small_crops=2
+        args=args
     )
     val_loader = DataLoader(
         val_dataset,

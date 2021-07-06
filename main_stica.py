@@ -66,36 +66,8 @@ def main():
     else:
         aug_audio = []
 
-    train_dataset = AVideoDataset(
-        ds_name='kinetics',
-        mode='train',
-        path_to_data_dir='datasets/data',
-        num_frames=args.num_frames,
-        target_fps=args.target_fps,
-        sample_rate=args.sample_rate,
-        num_train_clips=args.num_train_clips,
-        train_crop_size=args.train_crop_size,
-        test_crop_size=args.test_crop_size,
-        num_data_samples=None,
-        colorjitter=args.colorjitter,
-        use_grayscale=args.use_grayscale,
-        use_gaussian=args.use_gaussian,
-        temp_jitter=True,
-        decode_audio=True,
-        aug_audio=aug_audio,
-        num_sec=args.num_sec_aud,
-        aud_sample_rate=args.aud_sample_rate,
-        aud_spec_type=args.aud_spec_type,
-        use_volume_jittering=args.use_volume_jittering,
-        use_temporal_jittering=args.use_audio_temp_jittering,
-        z_normalize=args.z_normalize,
-        dual_data=args.dual_data,
-        multi_crop=args.multi_crop,
-        use_random_resize_crop=args.use_random_resize_crop,
-        constant_scale=False,
-        num_large_crops=2,
-        num_small_crops=0
-    )
+    train_dataset = AVideoDataset(ds_name='kinetics', mode='train', decode_audio=True, args=args)
+
     sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
