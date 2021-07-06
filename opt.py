@@ -100,7 +100,7 @@ def parse_arguments():
                         help='use constant scale for all random resized crops')
     parser.add_argument('--cross_modal_alpha', type=float, default=0.5,
                         help='weighting of cross-modal loss')
-    parser.add_argument('--num_large_crops', type=int, default=1,
+    parser.add_argument('--num_large_crops', type=int, default=2,
                         help='Number of Large Crops')
     parser.add_argument('--num_small_crops', type=int, default=0,
                         help='Number of small Crops')
