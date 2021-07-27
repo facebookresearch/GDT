@@ -14,7 +14,6 @@ If you find GDT and STiCA useful in your research, please use the following BibT
       author={Mandela Patrick and Yuki M. Asano and Polina Kuznetsova and Ruth Fong and João F. Henriques and Geoffrey Zweig and Andrea Vedaldi},
       year={2021},
       booktitle={International Conference on Computer Vision (ICCV)},
-
 }
 
 @misc{m2021spacetime,
