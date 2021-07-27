@@ -12,19 +12,16 @@ If you find GDT and STiCA useful in your research, please use the following BibT
 @misc{patrick2020multimodal,
       title={Multi-modal Self-Supervision from Generalized Data Transformations}, 
       author={Mandela Patrick and Yuki M. Asano and Polina Kuznetsova and Ruth Fong and João F. Henriques and Geoffrey Zweig and Andrea Vedaldi},
-      year={2020},
-      eprint={2003.04298},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV}
+      year={2021},
+      booktitle={International Conference on Computer Vision (ICCV)},
+
 }
 
 @misc{m2021spacetime,
     title={Space-Time Crop & Attend: Improving Cross-modal Video Representation Learning},
     author={Mandela Patrick and Yuki M. Asano and Bernie Huang and Ishan Misra and Florian Metze and Joao Henriques and Andrea Vedaldi},
     year={2021},
-    eprint={2103.10211},
-    archivePrefix={arXiv},
-    primaryClass={cs.CV}
+    booktitle={International Conference on Computer Vision (ICCV)},
 }
 ```
 ## Highlights
