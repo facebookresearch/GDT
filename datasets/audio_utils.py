@@ -104,27 +104,18 @@ def load_audio(
     z_normalize=False,
 ):
 
-    # Load wav file @ sample_rate
-    ### REMOVE
-    if True:
-        aud_path = vid_path.replace(
-            '/datasets01/kinetics/070618/train_avi-480p', 
-            '/private/home/mandelapatrick/data/kinetics400/train/audio').replace(
-            '.avi', 
-            '.wav'
-        )
-        _, wav = wavfile.read(aud_path)
-    else:
-        out, _ = (
-            ffmpeg
-            .input(vid_path)
-            .output('-', format='s16le', acodec='pcm_s16le', ac=1, ar=sample_rate)
-            .run(quiet=True)
-        )
-        wav = (
-            np
-            .frombuffer(out, np.int16)
-        )
+    # Load wav file @ sample_rate    
+    out, _ = (
+        ffmpeg
+        .input(vid_path)
+        .output('-', format='s16le', acodec='pcm_s16le', ac=1, ar=sample_rate)
+        .run(quiet=True)
+    )
+    wav = (
+        np
+        .frombuffer(out, np.int16)
+    )
+    
     # Get spectogram
     spec = get_spec(
         wav, 
