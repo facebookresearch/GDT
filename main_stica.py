@@ -65,7 +65,7 @@ def main():
         aug_audio = []
 
     train_dataset = AVideoDataset(
-        ds_name='kinetics',
+        ds_name=args.dataset_name,
         mode='train',
         root_dir=args.root_dir,
         decode_audio=True,
@@ -565,6 +565,9 @@ def parse_arguments():
     #########################
     #### data parameters ####
     #########################
+    
+    parser.add_argument('--dataset_name', type=str, default='kinetics',
+                        help='name of dataset e.g kinetics, kinetics600')
     parser.add_argument('--root_dir', type=str, default=None,
                         help='path to dataset train directory e.g. /path/to/kinetics/train')
     parser.add_argument('--num_frames', type=int, default=30,
