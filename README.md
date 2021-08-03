@@ -65,6 +65,10 @@ This repo was tested with Ubuntu 16.04.5 LTS, Python 3.7.5, PyTorch 1.3.1, Torch
 
 ### Step 4
 
+- Install kornia library `pip install kornia==0.1.4` 
+
+### Step 5
+
 - See below for how to pretrain GDT / StiCa or benchmark pretrained models
 
 ## Data Preperation
@@ -158,7 +162,7 @@ sbatch scripts/pretrain_stica.sh $NUM_FRAMES $AUD_NUM_SEC $NUM_LARGE_CROPS $NUM_
 
 **Single-node distributed training:**
 ```
-python -m torch.distributed.launch --master_port=$RANDOM --nproc_per_node=2 --use_env main_stica.py --batch_size $BS --lr $LR
+python -m torch.distributed.launch --master_port=$RANDOM --nproc_per_node=2 --use_env main_stica.py --batch_size $BS --base_lr $LR
 ```
 
 **Hyper-parameters:**
