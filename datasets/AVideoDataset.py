@@ -190,8 +190,6 @@ class AVideoDataset(torch.utils.data.Dataset):
         ##* video croppings
         self.multi_crop=args.multi_crop # whether to get multiple crops per video
         self.use_random_resize_crop=args.use_random_resize_crop # if not, it just does random cropping.
-        self.num_large_crops=args.num_large_crops
-        self.num_small_crops=args.num_small_crops
         ##* downstream task cropping settings
         self.center_crop = center_crop # only center crop?
         self.num_ensemble_views = num_ensemble_views # 10 crops in time
@@ -409,23 +407,15 @@ class AVideoDataset(torch.utils.data.Dataset):
 
             # Perform data augmentation on video clip.
             if self.multi_crop:
-                multi_crop_clips = self.num_large_crops + self.num_small_crops
+                multi_crop_clips = 2
             else:
                 multi_crop_clips = 1
-                self.num_large_crops = 1
-                self.num_small_crops = 0
             use_random_resize_crop = (self.use_random_resize_crop) and (self.mode == 'train')
             for j in range(multi_crop_clips):
-                if j < self.num_large_crops:
-                    min_scale, max_scale, crop_size = (self.train_jitter_scales[0], 
-                        self.train_jitter_scales[1], self.train_crop_size)
-                    if use_random_resize_crop:
-                        min_scale, max_scale, crop_size = 0.14, 1.0, self.train_crop_size
-                else:
-                    min_scale, max_scale, crop_size = (self.train_jitter_scales[0], 
-                        self.train_jitter_scales[1], 96)
-                    if use_random_resize_crop:
-                        min_scale, max_scale, crop_size = 0.05, 0.14, 64
+                min_scale, max_scale, crop_size = (self.train_jitter_scales[0], 
+                    self.train_jitter_scales[1], self.train_crop_size)
+                if use_random_resize_crop:
+                    min_scale, max_scale, crop_size = 0.14, 1.0, self.train_crop_size
                 V.append(clip_augmentation(
                     frames.clone(),
                     spatial_idx=spatial_sample_index,
