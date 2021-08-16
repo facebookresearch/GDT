@@ -555,7 +555,7 @@ def evaluate(model, val_loader, epoch=0, writer=None, ds='hmdb51'):
         end = time.perf_counter()
         for batch_idx, batch in enumerate(val_loader):
 
-            (video, _, target, _, video_idx) = batch
+            (video, target, _, video_idx) = batch
 
             # move to gpu
             video = video.cuda(non_blocking=True)
