@@ -43,7 +43,7 @@ We provide GDT models pretrained on Kinetics-400 (K400), HowTo100M (HT100M), and
 | GDT | HT100M | 30 | 112 | 94.1 | 67.4 | [model](https://dl.fbaipublicfiles.com/GDT/gdt_HT100M.pth) |
 | GDT | IG65M | 30 | 112 | 72.8 | 95.2 | [model](https://dl.fbaipublicfiles.com/GDT/gdt_IG65M.pth) |
 
-| name | dataset | # of frames | spatial crop | UCF101 Top1 | HMDB51 Top1 | url |
+| name | dataset | # of frames | spatial crop | HMDB51 Top1 | UCF101 Top1 | url |
 | --- | --- | --- | --- | --- | --- | --- |
 | STiCA | K400 | 60 | 112 | 67.0 | 93.1 | [Coming Soon](XX) |
 
