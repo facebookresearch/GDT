@@ -37,7 +37,7 @@ We show how to efficiently incorporate within-modal invariance learning using fe
 
 We provide GDT models pretrained on Kinetics-400 (K400), HowTo100M (HT100M), and Instagram-65M (IG65M) datasets, and StiCa models pretrained on Kinetics-400 (K400).
 
-| name | dataset | # of frames | spatial crop | UCF101 Top1 | HMDB51 Top1 | url |
+| name | dataset | # of frames | spatial crop | HMDB51 Top1 | UCF101 Top1 | url |
 | --- | --- | --- | --- | --- | --- | --- |
 | GDT | K400 | 30 | 112 | 62.3 | 90.9 | [model](https://dl.fbaipublicfiles.com/GDT/gdt_K400.pth) |
 | GDT | HT100M | 30 | 112 | 94.1 | 67.4 | [model](https://dl.fbaipublicfiles.com/GDT/gdt_HT100M.pth) |
@@ -45,7 +45,7 @@ We provide GDT models pretrained on Kinetics-400 (K400), HowTo100M (HT100M), and
 
 | name | dataset | # of frames | spatial crop | UCF101 Top1 | HMDB51 Top1 | url |
 | --- | --- | --- | --- | --- | --- | --- |
-| STiCA | K400 | 60 | 112 | 67.0 | 93.1 | [Soon](XX) |
+| STiCA | K400 | 60 | 112 | 67.0 | 93.1 | [Coming Soon](XX) |
 
 ## Installation
 
