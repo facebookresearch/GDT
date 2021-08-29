@@ -169,6 +169,7 @@ class AVideoDataset(torch.utils.data.Dataset):
         root_dir=None,
         mode='train',
         decode_audio=False,
+        num_train_clips=1,
         # settings for downstream tasks
         num_ensemble_views=10,
         num_spatial_crops=3,
@@ -184,6 +185,7 @@ class AVideoDataset(torch.utils.data.Dataset):
         self.num_frames=args.num_frames   # number of frames
         self.target_fps=args.target_fps   # frames per second
         self.sample_rate=args.sample_rate # audio sample rate
+        self.num_train_clips=num_train_clips # num of clips to sample per video during training
         #* video related params
         self.train_crop_size=args.train_crop_size
         self.test_crop_size=args.test_crop_size
@@ -238,7 +240,7 @@ class AVideoDataset(torch.utils.data.Dataset):
         # For testing, NUM_ENSEMBLE_VIEWS clips are sampled from every video.
         # For every clip, NUM_SPATIAL_CROPS is cropped spatially from the frames.
         if self.mode in ["train", "val"]:
-            self._num_clips = 1
+            self._num_clips = self.num_train_clips
         elif self.mode in ["test"]:
             self._num_clips = (
                     self.num_ensemble_views * self.num_spatial_crops
