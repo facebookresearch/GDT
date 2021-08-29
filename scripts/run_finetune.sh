@@ -118,7 +118,7 @@ python3 $MAINSCRIPT \
 --num-spatial-crops ${NUM_SPATIAL_CROPS} \
 --test-time-cj ${TEST_TIME_CJ} \
 --use_random_resize_crop True \
---num_layer 0 \
+--num_layer 2 \
 --workers ${NUM_WORKERS}" >> $SCRIPT
         chmod +x $SCRIPT
         
