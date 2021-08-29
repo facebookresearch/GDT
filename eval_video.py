@@ -312,6 +312,7 @@ def main(args, writer):
         ds_name=args.dataset,
         root_dir=args.root_dir,
         mode='train',
+        num_train_clips=args.train_clips_per_video,
         decode_audio=False,
         center_crop=False,
         fold=args.fold,
